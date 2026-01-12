@@ -1,0 +1,230 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Cattle Management
+model Cattle {
+  id            String          @id @default(cuid())
+  tagNumber     String          @unique 
+  name          String?
+  gender        Gender
+  breed         String
+  dateOfBirth   DateTime
+  weight        Float?
+  imageUrl      String?
+  status        CattleStatus    @default(ACTIVE)
+  category      CattleCategory
+  motherId      String?
+  mother        Cattle?         @relation("CattleOffspring", fields: [motherId], references: [id])
+  offspring     Cattle[]        @relation("CattleOffspring")
+  
+  healthRecords HealthRecord[]
+  milkRecords   MilkRecord[]
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([gender])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum CattleStatus {
+  ACTIVE
+  SOLD
+  DECEASED
+  QUARANTINED
+}
+
+enum CattleCategory {
+  BULL
+  COW
+  HEIFER
+  CALF
+  STEER
+}
+
+// Health & Vaccination Records
+model HealthRecord {
+  id              String           @id @default(cuid())
+  cattleId        String
+  cattle          Cattle           @relation(fields: [cattleId], references: [id], onDelete: Cascade)
+  
+  recordType      HealthRecordType
+  vaccinationType VaccinationType?
+  description     String
+  scheduledDate   DateTime
+  completedDate   DateTime?
+  status          RecordStatus     @default(PENDING)
+  veterinarian    String?
+  cost            Float?
+  notes           String?
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([cattleId])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+enum HealthRecordType {
+  VACCINATION
+  DEWORMING
+  CHECKUP
+  TREATMENT
+  SURGERY
+}
+
+enum VaccinationType {
+  FMD              // Foot and Mouth Disease
+  BRUCELLOSIS
+  ANTHRAX
+  BLACKLEG
+  RABIES
+  OTHER
+}
+
+enum RecordStatus {
+  PENDING
+  COMPLETED
+  OVERDUE
+  CANCELLED
+}
+
+// Milk Production Records
+model MilkRecord {
+  id          String   @id @default(cuid())
+  cattleId    String?
+  cattle      Cattle?  @relation(fields: [cattleId], references: [id], onDelete: SetNull)
+  
+  date        DateTime
+  liters      Float
+  session     MilkSession
+  quality     MilkQuality @default(GOOD)
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([cattleId])
+}
+
+enum MilkSession {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum MilkQuality {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+}
+
+// Feed Inventory Management
+model FeedInventory {
+  id            String         @id @default(cuid())
+  feedType      FeedType
+  quantity      Float          // in kg
+  unit          String         @default("kg")
+  minThreshold  Float          // minimum quantity before reorder
+  cost          Float?
+  supplier      String?
+  lastRestocked DateTime?
+  expiryDate    DateTime?
+  
+  feedRecords   FeedRecord[]
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([feedType])
+}
+
+enum FeedType {
+  HAY
+  CONCENTRATE
+  SILAGE
+  MINERAL_SUPPLEMENT
+  GRAIN
+  OTHER
+}
+
+// Feed Usage Records
+model FeedRecord {
+  id              String        @id @default(cuid())
+  inventoryId     String
+  inventory       FeedInventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  
+  date            DateTime
+  quantityUsed    Float         // in kg
+  notes           String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([inventoryId])
+  @@index([date])
+}
+
+// Daily Summary for Dashboard Stats
+model DailySummary {
+  id                String   @id @default(cuid())
+  date              DateTime @unique
+  
+  totalCattle       Int
+  maleCount         Int
+  femaleCount       Int
+  calfCount         Int
+  
+  totalMilkLiters   Float
+  avgMilkPerCow     Float
+  
+  feedHayUsed       Float
+  feedConcentrateUsed Float
+  feedSilageUsed    Float
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([date])
+}
+
+// User Management (optional, for multi-user support)
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  role      UserRole @default(WORKER)
+  password  String   // Remember to hash passwords!
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  WORKER
+  VETERINARIAN
+}
