@@ -111,12 +111,12 @@ const data = {
     },
     {
       title: "Employees",
-      url: "#",
+      url: "/dashboard/Employees",
       icon: Users,
       items: [
         {
           title: "Directory",
-          url: "#",
+          url: "/dashboard/Employees",
         },
         {
           title: "Roles & Permissions",
@@ -132,18 +132,51 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = React.useState({
+    name: "User",
+    email: "",
+    avatar: "",
+    role: "WORKER",
+  })
+
+  React.useEffect(() => {
+    fetch("/api/auth/session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setUser({
+            name: data.user.name,
+            email: data.user.email,
+            avatar: "", // Add avatar logic if needed
+            role: data.user.role,
+          })
+        }
+      })
+      .catch((err) => console.error("Failed to fetch session:", err))
+  }, [])
+
+  // Filter menu items based on user role
+  const filteredNavMain = data.navMain.filter(item => {
+    if (item.title === "Employees") {
+      return user.role === "ADMIN";
+    }
+    return true;
+  });
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={filteredNavMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
 }
+
+

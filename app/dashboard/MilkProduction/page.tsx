@@ -477,6 +477,7 @@ export default function MilkProductionPage() {
               orientation="vertical"
               className="mr-2 data-[orientation=vertical]:h-4"
             />
+            <h1 className="text-base font-medium">Milk Production</h1>
             <div className="ml-auto flex items-center gap-2">
               <ThemeToggle />
               <Button onClick={() => setShowAddModal(true)} className="cursor-pointer bg-chart-2 hover:bg-chart-2/90 text-white rounded-bl-md transition-colors">

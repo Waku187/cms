@@ -1,7 +1,9 @@
-import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+const hashedPassword = bcrypt.hashSync("password123", 10);
 
 // Helper function to get random element from array
 function randomElement<T>(array: T[]): T {
@@ -75,7 +77,7 @@ async function main() {
         email: "admin@cms.com",
         name: "Admin User",
         role: "ADMIN",
-        password: "$2a$10$dummyhash", // In production, use proper hashing
+        password: hashedPassword, // In production, use proper hashing
       },
     }),
     prisma.user.create({
@@ -83,7 +85,7 @@ async function main() {
         email: "manager@cms.com",
         name: "Farm Manager",
         role: "MANAGER",
-        password: "$2a$10$dummyhash",
+        password: hashedPassword,
       },
     }),
     prisma.user.create({
@@ -91,7 +93,7 @@ async function main() {
         email: "vet@cms.com",
         name: "Dr. Sarah Johnson",
         role: "VETERINARIAN",
-        password: "$2a$10$dummyhash",
+        password: hashedPassword,
       },
     }),
     prisma.user.create({
@@ -99,7 +101,7 @@ async function main() {
         email: "worker@cms.com",
         name: "Farm Worker",
         role: "WORKER",
-        password: "$2a$10$dummyhash",
+        password: hashedPassword,
       },
     }),
   ]);
