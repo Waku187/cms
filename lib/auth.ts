@@ -2,19 +2,19 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-const secretKey = "secret";
-const key = new TextEncoder().encode(process.env.JWT_SECRET || secretKey);
+const secretKey = "secret_fallback_key_that_is_long_enough_for_hs256";
+const get_key = () => new TextEncoder().encode(process.env.JWT_SECRET || secretKey);
 
 export async function encrypt(payload: any) {
     return await new SignJWT(payload)
         .setProtectedHeader({ alg: "HS256" })
         .setIssuedAt()
         .setExpirationTime("2h")
-        .sign(key);
+        .sign(get_key());
 }
 
 export async function decrypt(input: string): Promise<any> {
-    const { payload } = await jwtVerify(input, key, {
+    const { payload } = await jwtVerify(input, get_key(), {
         algorithms: ["HS256"],
     });
     return payload;
